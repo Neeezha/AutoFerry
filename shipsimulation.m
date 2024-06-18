@@ -18,7 +18,7 @@ y=zeros(N,1);
 theta = zeros(N,1);
 V = 1; % We'll start with a constant velocity
 
-theta(1) = 0;
+theta(1) = 0; %start at 0 degrees
 
 %specifying an initial condition
 ship_state(:,1)=0;
