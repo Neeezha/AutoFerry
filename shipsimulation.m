@@ -14,10 +14,6 @@ dt = 0.01; % our time interval
 tspan = 0:dt:200; % a finite vector for our time to start out
 N = length(tspan); 
 
-% u_1 = cosd(rot90(tspan(1,:))); 
-% We'll start with a sinusoid and mess with the control input later
-% now redundant due to u being vector now
-
 % Goal 6/20/24: Create two landmasses and ferries, waypoint array/index var.
 % Guide boat from ferry 1 to ferry 2
 
@@ -122,6 +118,8 @@ for k = 2:(N)
     u(k) = Kp * theta_err(k);
 end 
 
+%%%% This section constructs shapes, but no computation is done %%%%
+
 % This constructs the ships body using the patch function to make a shape
 % we can manipulate
 shipbody_x = [1, 0, -1, -1, 0, 1]; % these form the coordinates of our shape
@@ -136,7 +134,6 @@ xlim([0 100])
 ylim([0 100])
 
 % Draw two lines; these represent landmasses
-
 LM_x1 = [0 40];
 LM_x2 = [60 100];
 
@@ -150,12 +147,11 @@ line(LM_x2, LM_y2);
 % fer_y = [0 1 1 0]; 
 % plot(fer_x,fer_y)
 
-% Plots ship, waypoint, and path
+%%%% Plotting ship, waypoint, and path
 for i = 1:N-1
     hold on;
     s.Matrix = makehgtform('translate', [x(i+1) y(i+1) 0], 'zrotate', theta(i)*pi/180);
-    %drawnow
-    %plot(x(i),y(i),'o')
+    % This plots the trail of the ship
     plot([x(i) x(i+1)],[y(i) y(i+1)],'--')
 
     % Plots waypoint
