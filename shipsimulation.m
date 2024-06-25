@@ -18,6 +18,14 @@ N = length(tspan);
 % We'll start with a sinusoid and mess with the control input later
 % now redundant due to u being vector now
 
+% Goal 6/20/24: Create two landmasses and ferries, waypoint array/index var.
+% Guide boat from ferry 1 to ferry 2
+
+% Hard coded waypoints for ferry to follow 
+next_wp = [87 40; 80 45; 75 50; 65 55; 60 60; 50 70; 45 75; 30 80];
+% zeros(8, 2); % 8 rows, 2 columns; x_n and y_n respectively
+% [0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0]
+
 x=zeros(N,1); % initializing the position vectors
 y=zeros(N,1);
 theta = zeros(N,1);
@@ -45,13 +53,13 @@ b = 3;  % we'll keep the variable b as a constant at first
 Kp = 1; % Proportional control gain, can be adjusted after for-loop works
 
 % Initial position and angle parameters
-theta(1) = 160;
-x(1) = 10;
-y(1) = 5;
+theta(1) = 45;
+x(1) = 80;
+y(1) = 20;
 
 % Initial desired position parameters
-x_des(1) = 50;
-y_des(1) = 50;
+x_des(1) = 85;
+y_des(1) = 30;
 
 % specifying an initial condition
 % ship_state(:,1)=0;
@@ -72,19 +80,21 @@ for k = 2:(N)
     x_err(k) = x_des(k-1) - x(k);
     y_err(k) = y_des(k-1) - y(k);
 
-    % Debugging for variable values
-    % x_err(k)
-    % x_des(k)
-    % x(k)
-
+    % Counter for waypoints reached, starting at 1
+    way_index = 1; % Increment each time each waypoint is reached
+    
     % Waypoint generator, based on distance from current waypoint
     dist = sqrt(x_err(k)^2 + y_err(k)^2);
+    
     % checks if boat is within range of the waypoint
     if dist < 2 % Set new waypoint if within range
-        x_des(k) = rand(1)*100;
-        y_des(k) = rand(1)*100;
-        % x_err(k) = x_des(k) - x(k);
-        % y_err(k) = y_des(k) - y(k);
+        % x_des(k) = rand(1)*100;
+        % y_des(k) = rand(1)*100;
+        
+        % Set next destination to 
+        way_index = way_index + 1;
+        x_des(k) = next_wp(way_index, 1);
+        y_des(k) = next_wp(way_index, 2);
 
     % Prepare next waypoint
     % It works for now, but causes the current waypoint to flash
@@ -124,6 +134,21 @@ axis equal
 xlim([0 100])
 ylim([0 100])
 
+% Draw two lines; these represent landmasses
+
+LM_x1 = [0 40];
+LM_x2 = [60 100];
+
+LM_y1 = [70 100];
+LM_y2 = [0 30]; 
+
+line(LM_x1, LM_y1);
+line(LM_x2, LM_y2);
+
+% fer_x = [0 0 1 1]; 
+% fer_y = [0 1 1 0]; 
+% plot(fer_x,fer_y)
+
 % Plots ship, waypoint, and path
 for i = 1:N-1
     hold on;
@@ -134,6 +159,8 @@ for i = 1:N-1
 
     % Plots waypoint
     plot(x_des(i), y_des(i), 'x')
+
+
 
     drawnow % I think this is what draws the shape every update
     hold off;
