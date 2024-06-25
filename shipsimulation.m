@@ -20,6 +20,9 @@ N = length(tspan);
 % Hard coded waypoints for ferry to follow 
 % 8 rows, 2 columns; x_n and y_n respectively
 next_wp = [87 40; 80 45; 75 50; 65 55; 60 60; 50 70; 45 75; 30 80];
+% next_wp = zeros(8, 2); %for when we generate new waypoints randomly
+% [0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0]
+
 % Counter for waypoints reached, starting at 1
 way_index = 1; % Increment each time each waypoint is reached
 
