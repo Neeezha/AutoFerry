@@ -22,9 +22,11 @@ N = length(tspan);
 % Guide boat from ferry 1 to ferry 2
 
 % Hard coded waypoints for ferry to follow 
+% 8 rows, 2 columns; x_n and y_n respectively
 next_wp = [87 40; 80 45; 75 50; 65 55; 60 60; 50 70; 45 75; 30 80];
-% zeros(8, 2); % 8 rows, 2 columns; x_n and y_n respectively
-% [0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0]
+% Counter for waypoints reached, starting at 1
+way_index = 1; % Increment each time each waypoint is reached
+
 
 x=zeros(N,1); % initializing the position vectors
 y=zeros(N,1);
@@ -79,15 +81,13 @@ for k = 2:(N)
     % finding error margin between points
     x_err(k) = x_des(k-1) - x(k);
     y_err(k) = y_des(k-1) - y(k);
-
-    % Counter for waypoints reached, starting at 1
-    way_index = 1; % Increment each time each waypoint is reached
     
     % Waypoint generator, based on distance from current waypoint
     dist = sqrt(x_err(k)^2 + y_err(k)^2);
     
     % checks if boat is within range of the waypoint
-    if dist < 2 % Set new waypoint if within range
+    %I'm going to make this all inside an if to keep way_index under 9 -nzh
+    if dist < 2 && way_index < 8 % Set new waypoint if within range
         % x_des(k) = rand(1)*100;
         % y_des(k) = rand(1)*100;
         
@@ -95,6 +95,7 @@ for k = 2:(N)
         way_index = way_index + 1;
         x_des(k) = next_wp(way_index, 1);
         y_des(k) = next_wp(way_index, 2);
+
 
     % Prepare next waypoint
     % It works for now, but causes the current waypoint to flash
