@@ -123,19 +123,20 @@ end
 
 %%%% This section constructs shapes, but no computation is done %%%%
 
-% This constructs the ships body using the patch function to make a shape
+% New reference frame of 0 to 100 range for both axes
+figure(1); 
+hold on; 
+axis equal
+xlim([0 100])
+ylim([0 100])
+
+% This constructs the ship's body using the patch function to make a shape
 % we can manipulate
 shipbody_x = [1, 0, -1, -1, 0, 1]; % these form the coordinates of our shape
 shipbody_y = [0, 0.5, 0.5, -0.5, -0.5, 0];
 s = hgtransform;
 % This forms the shape, connects it to s
 patch('XData', shipbody_x, 'YData', shipbody_y, 'Parent', s) 
-
-% New reference frame of 0 to 100 range for both axes
-axis equal
-xlim([0 100])
-ylim([0 100])
-
 % Draw two lines; these represent landmasses
 LM_x1 = [0 40];
 LM_x2 = [60 100];
@@ -150,18 +151,24 @@ line(LM_x2, LM_y2);
 % fer_y = [0 1 1 0]; 
 % plot(fer_x,fer_y)
 
+% Setup trail and waypoint ahead of loop 
+ship_trail = plot([x(1) x(2)],[y(1) y(2)],'--'); 
+current_waypoint = plot(x_des(1), y_des(1), 'x'); 
+
 %%%% Plotting ship, waypoint, and path
 for i = 1:N-1
-    hold on;
+
+    % Plot ship at current location/orientation
     s.Matrix = makehgtform('translate', [x(i+1) y(i+1) 0], 'zrotate', theta(i)*pi/180);
-    % This plots the trail of the ship
-    plot([x(i) x(i+1)],[y(i) y(i+1)],'--')
+    
+    % Update trail of the ship
+    set(ship_trail,'XData',x(1:i)); 
+    set(ship_trail,'YData',y(1:i)); 
 
-    % Plots waypoint
-    plot(x_des(i), y_des(i), 'x')
+    % Update waypoint plot 
+    set(current_waypoint,'XData',x_des(i)); 
+    set(current_waypoint,'YData',y_des(i)); 
+    
+    drawnow % This is what draws the shape every update
 
-
-
-    drawnow % I think this is what draws the shape every update
-    hold off;
 end
