@@ -19,13 +19,14 @@ N = length(tspan);
 
 % Hard coded waypoints for ferry to follow 
 % 8 rows, 2 columns; x_n and y_n respectively
-next_wp = [87 40; 80 45; 75 50; 65 55; 60 60; 50 70; 45 75; 30 80];
+next_wp = [87 40; 80 45; 75 50; 65 55; 60 60; 50 70; 45 75; 30 90;
+    25 75; 15 65; 25 55; 30 50; 40 40; 50 35; 60 30; 70 25; 80 20];
 % next_wp = zeros(8, 2); %for when we generate new waypoints randomly
 % [0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0]
 
 % Counter for waypoints reached, starting at 1
 way_index = 1; % Increment each time each waypoint is reached
-
+next_wp_size = length(next_wp); % Checks length of next_wp array
 
 x=zeros(N,1); % initializing the position vectors
 y=zeros(N,1);
@@ -46,9 +47,9 @@ theta_dot = zeros(N,1);
 u = zeros(N,1); % initializing heading control vector
 
 % Constant values
-V = 10; % We'll start with a constant velocity
+V = 7; % We'll start with a constant velocity
         % this should be adjusted alongside b
-b = 3;  % we'll keep the variable b as a constant at first
+b = 2.5;  % we'll keep the variable b as a constant at first
         % b affects rotation rate of change, should be changed alongside V
         % it was at the top of the program with timescale variables
 Kp = 1; % Proportional control gain, can be adjusted after for-loop works
@@ -86,7 +87,8 @@ for k = 2:(N)
     
     % checks if boat is within range of the waypoint
     %I'm going to make this all inside an if to keep way_index under 9 -nzh
-    if dist < 2 && way_index < 8 % Set new waypoint if within range
+    % Changed 8 to length of waypoint list, could be more flexible -tdn
+    if dist < 2 && way_index < next_wp_size % Set new waypoint if within range
         % x_des(k) = rand(1)*100;
         % y_des(k) = rand(1)*100;
         
@@ -94,10 +96,16 @@ for k = 2:(N)
         way_index = way_index + 1;
         x_des(k) = next_wp(way_index, 1);
         y_des(k) = next_wp(way_index, 2);
-
-
+        if way_index == 8 % At this point, both current and desired = 495 vs 135 for first loop
+            theta(k-1)
+            theta_des
+        end
+    elseif way_index == next_wp_size 
+        way_index = 1;
+        x_des(k) = x_des(k-1);
+        y_des(k) = y_des(k-1);
+        
     % Prepare next waypoint
-    % It works for now, but causes the current waypoint to flash
     else 
         x_des(k) = x_des(k-1);
         y_des(k) = y_des(k-1);
@@ -110,8 +118,10 @@ for k = 2:(N)
     % If turning in one direction is > 180 degress, go the other direction
     if ((theta_des - theta(k)) > 180)
         theta_des = theta_des - 360;
+    
     elseif (theta_des - theta(k) < -180)
         theta_des = theta_des + 360;
+        
     end
 
     % calculating angle error for heading control
