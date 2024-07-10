@@ -96,14 +96,17 @@ for k = 2:(N)
         way_index = way_index + 1;
         x_des(k) = next_wp(way_index, 1);
         y_des(k) = next_wp(way_index, 2);
-        if way_index == 8 % At this point, both current and desired = 495 vs 135 for first loop
-            theta(k-1)
-            theta_des
-        end
+         % if way_index == 8 % At this point, both current and desired = 495 vs 135 for first loop
+         %     theta(k-1)
+         %     theta_des
+         % end
     elseif way_index == next_wp_size 
         way_index = 1;
         x_des(k) = x_des(k-1);
         y_des(k) = y_des(k-1);
+        % theta(k-1)
+        theta(k-1) = theta(k-1) - 360;
+        % theta(k-1)
         
     % Prepare next waypoint
     else 
@@ -114,6 +117,15 @@ for k = 2:(N)
     % using error margins to find desired angle to rotate
     theta_des = atan2d(y_err(k), x_err(k));
 
+
+    % if dist < 3 && way_index == 8
+    %     theta_des
+    % end
+
+    if theta(k) > 180
+        theta(k) = theta(k) - 360;
+    end
+
     % Adjust for desired turn direction
     % If turning in one direction is > 180 degress, go the other direction
     if ((theta_des - theta(k)) > 180)
@@ -123,7 +135,7 @@ for k = 2:(N)
         theta_des = theta_des + 360;
         
     end
-
+    
     % calculating angle error for heading control
     theta_err(k) = theta_des - theta(k);
 
