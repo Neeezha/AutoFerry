@@ -1,5 +1,3 @@
-% this is a test
-
 % Nick Hauger 21MAY24
 % Tan Nguyen 06/18/24
 % Note: all math is done in degrees
@@ -14,58 +12,47 @@ clear variables; clc; close all;
 dt = 0.01; % our time interval
 tspan = 0:dt:200; % a finite vector for our time to start out
 N = length(tspan); 
-
-% Goal 6/20/24: Create two landmasses and ferries, waypoint array/index var.
-% Guide boat from ferry 1 to ferry 2
-
-% Hard coded waypoints for ferry to follow 
-% 8 rows, 2 columns; x_n and y_n respectively
-next_wp = [87 40; 80 45; 75 50; 65 55; 60 60; 50 70; 45 75; 30 90;
-    25 75; 15 65; 25 55; 30 50; 40 40; 50 35; 60 30; 70 25; 80 20];
-% next_wp = zeros(8, 2); %for when we generate new waypoints randomly
-% [0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0; 0 0]
-
-% Counter for waypoints reached, starting at 1
-way_index = 1; % Increment each time each waypoint is reached
-next_wp_size = length(next_wp); % Checks length of next_wp array
-
-x=zeros(N,1); % initializing the position vectors
-y=zeros(N,1);
-theta = zeros(N,1);
-
-x_err=zeros(N,1); % initializing error vectors
-y_err=zeros(N,1);
-theta_err = zeros(N,1);
-
-x_des=zeros(N,1); % initializing desired position vectors
-y_des=zeros(N,1);
-% theta_des = zeros(N,1);
-
-x_dot = zeros(N,1); % initializing rate of change vectors
-y_dot = zeros(N,1);
-theta_dot = zeros(N,1);
-
-u = zeros(N,1); % initializing heading control vector
+% initializing the position vectors
+x=zeros(N,1); y=zeros(N,1); theta = zeros(N,1);
+% initializing error vectors
+x_err=zeros(N,1); y_err=zeros(N,1); theta_err = zeros(N,1);
+% initializing desired position vectors
+x_des=zeros(N,1); y_des=zeros(N,1); % theta_des = zeros(N,1);
+% initializing rate of change vectors
+x_dot = zeros(N,1); y_dot = zeros(N,1); theta_dot = zeros(N,1);
+% initializing heading control vector
+u = zeros(N,1); 
 
 % Constant values
 V = 7; % We'll start with a constant velocity
         % this should be adjusted alongside b
 b = 2.5;  % we'll keep the variable b as a constant at first
         % b affects rotation rate of change, should be changed alongside V
-        % it was at the top of the program with timescale variables
 Kp = 1; % Proportional control gain, can be adjusted after for-loop works
 
 % Initial position and angle parameters
-theta(1) = 45;
-x(1) = 80;
-y(1) = 20;
+theta(1) = 135;
+x(1) = 98; y(1) = 83; 
+x_des(1) = 80; y_des(1) = 88;
 
-% Initial desired position parameters
-x_des(1) = 85;
-y_des(1) = 30;
+% theta(1) = 45; % These were the original inital position/heading values
+% x(1) = 80; y(1) = 20;% we start at (80,20)
+% % Initial desired position parameters
+% x_des(1) = 85; y_des(1) = 30; % and the first point we want to head
+% towards is (85,30)
 
-% specifying an initial condition
-% ship_state(:,1)=0;
+% Hard coded waypoints for ferry to follow 
+% 8 rows, 2 columns; x_n and y_n respectively
+% New waypoints to follow the ferry path on the background map
+next_wp = [73 90; 64 93; 49 93; 43 82; 31 55; 22 34; 15 17; 3 14;
+            13 13; 23 36; 35 64; 44 87; 51 94; 74 89; 97 84];
+% Original waypoints before we used a background map
+% next_wp = [87 40; 80 45; 75 50; 65 55; 60 60; 50 70; 45 75; 30 90;
+%     25 75; 15 65; 25 55; 30 50; 40 40; 50 35; 60 30; 70 25; 80 20];
+
+% Counter for waypoints reached, starting at 1
+way_index = 1; % Increment each time each waypoint is reached
+next_wp_size = length(next_wp); % Checks length of next_wp array
 
 % We'll do a loop where we update the equations as we go.
 for k = 2:(N)
@@ -87,27 +74,19 @@ for k = 2:(N)
     dist = sqrt(x_err(k)^2 + y_err(k)^2);
     
     % checks if boat is within range of the waypoint
-    %I'm going to make this all inside an if to keep way_index under 9 -nzh
-    % Changed 8 to length of waypoint list, could be more flexible -tdn
-    if dist < 2 && way_index < next_wp_size % Set new waypoint if within range
-        % x_des(k) = rand(1)*100;
-        % y_des(k) = rand(1)*100;
-        
+    % Sets a new waypoint if within range of current wp, and we arent on
+    % the final index of next_wp vector
+    if dist < 2 && way_index < next_wp_size 
         % Set next destination to 
         way_index = way_index + 1;
         x_des(k) = next_wp(way_index, 1);
         y_des(k) = next_wp(way_index, 2);
-         % if way_index == 8 % At this point, both current and desired = 495 vs 135 for first loop
-         %     theta(k-1)
-         %     theta_des
-         % end
-    elseif way_index == next_wp_size 
+
+    elseif way_index == next_wp_size %if we reach wp end, loop to index 1
         way_index = 1;
         x_des(k) = x_des(k-1);
         y_des(k) = y_des(k-1);
-        % theta(k-1)
         theta(k-1) = theta(k-1) - 360;
-        % theta(k-1)
         
     % Prepare next waypoint
     else 
@@ -118,12 +97,7 @@ for k = 2:(N)
     % using error margins to find desired angle to rotate
     theta_des = atan2d(y_err(k), x_err(k));
 
-
-    % if dist < 3 && way_index == 8
-    %     theta_des
-    % end
-
-    if theta(k) > 180
+    if theta(k) > 180 % this keeps our current theta between -180 & 180
         theta(k) = theta(k) - 360;
     end
 
@@ -133,13 +107,11 @@ for k = 2:(N)
         theta_des = theta_des - 360;
     
     elseif (theta_des - theta(k) < -180)
-        theta_des = theta_des + 360;
-        
+        theta_des = theta_des + 360; 
     end
     
     % calculating angle error for heading control
     theta_err(k) = theta_des - theta(k);
-
     % Calculate heading control input
     u(k) = Kp * theta_err(k);
 end 
@@ -153,6 +125,11 @@ axis equal
 xlim([0 100])
 ylim([0 100])
 
+%this creates an image object we can manipulate and plot as a background
+im = imread('map.png');
+backgrnd = image(xlim,flip(ylim),im);
+uistack(backgrnd,'bottom')
+
 % This constructs the ship's body using the patch function to make a shape
 % we can manipulate
 shipbody_x = [1, 0, -1, -1, 0, 1]; % these form the coordinates of our shape
@@ -160,25 +137,17 @@ shipbody_y = [0, 0.5, 0.5, -0.5, -0.5, 0];
 s = hgtransform;
 % This forms the shape, connects it to s
 patch('XData', shipbody_x, 'YData', shipbody_y, 'Parent', s) 
-% Draw two lines; these represent landmasses
-LM_x1 = [0 40];
-LM_x2 = [60 100];
 
-LM_y1 = [70 100];
-LM_y2 = [0 30]; 
-
-line(LM_x1, LM_y1);
-line(LM_x2, LM_y2);
-
-% fer_x = [0 0 1 1]; 
-% fer_y = [0 1 1 0]; 
-% plot(fer_x,fer_y)
+% % Draw two lines; these represent landmasses % Not needed with background
+% LM_x1 = [0 40]; LM_x2 = [60 100];
+% LM_y1 = [70 100]; LM_y2 = [0 30]; 
+% line(LM_x1, LM_y1); line(LM_x2, LM_y2);
 
 % Setup trail and waypoint ahead of loop 
 ship_trail = plot([x(1) x(2)],[y(1) y(2)],'--'); 
 current_waypoint = plot(x_des(1), y_des(1), 'x'); 
 
-%%%% Plotting ship, waypoint, and path
+%%%% Plotting ship, waypoint, and path %%%%
 for i = 1:N-1
 
     % Plot ship at current location/orientation
