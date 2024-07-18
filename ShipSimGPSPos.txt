@@ -1,0 +1,43 @@
+Steilacoom Ketron Island starting GPS position
+47.172858, -122.603794
+
+	First major turn
+First bend in path
+47.174230, -122.613066
+
+Second bend
+47.174295, -122.615920
+
+Third bend
+47.174184, -122.616770
+
+Fourth bend
+47.173848, -122.617448
+
+	Second major turn
+First bend
+47.162356, -122.626268
+
+Second bend
+47.162079, -122.626684
+
+Third bend
+47.161995, -122.627087
+
+Fourth bend
+47.161989, -122.627486
+
+Ending position
+47.162247, -122.629286
+
+Bottom left corner
+47.145618, -122.646773
+
+Top right corner
+47.183999, -122.585841
+
+
+
+
+
+
