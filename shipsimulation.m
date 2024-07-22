@@ -9,8 +9,8 @@ clear variables; clc; close all;
 % state:    (x, y , theta, V)
 % roc:      (x_dot, y_dot, theta_dot, V_dot)
 
-dt = 0.01; % our time interval
-tspan = 0:dt:200; % a finite vector for our time to start out
+dt = 0.1; % our time interval
+tspan = 0:dt:1000; % a finite vector for our time to start out
 N = length(tspan); 
 % initializing the position vectors
 x=zeros(N,1); y=zeros(N,1); theta = zeros(N,1);
@@ -24,31 +24,36 @@ x_dot = zeros(N,1); y_dot = zeros(N,1); theta_dot = zeros(N,1);
 u = zeros(N,1); 
 
 % Constant values
-V = 7; % We'll start with a constant velocity
+V = 10; % We'll start with a constant velocity
         % this should be adjusted alongside b
 b = 2.5;  % we'll keep the variable b as a constant at first
         % b affects rotation rate of change, should be changed alongside V
 Kp = 1; % Proportional control gain, can be adjusted after for-loop works
 
-% Initial position and angle parameters
-theta(1) = 135;
-x(1) = 98; y(1) = 83; 
-x_des(1) = 80; y_des(1) = 88;
-
-% theta(1) = 45; % These were the original inital position/heading values
-% x(1) = 80; y(1) = 20;% we start at (80,20)
-% % Initial desired position parameters
-% x_des(1) = 85; y_des(1) = 30; % and the first point we want to head
-% towards is (85,30)
+% plot(136.1, -28.7, '*')
+% plot(166.3, -28.0, '*')
+% plot(196.7, -18.7, '*')
+% plot(228.2, 12.12, '*')
+% 
+% plot(895.0, 1290.0, '*')
+% plot(946.3, 1327.3, '*')
+% plot(1010.5, 1339.7, '*')
+% plot(1226.3, 1332.4, '*')
+% 
+% plot(1927.3, 1179.9, '*')
 
 % Hard coded waypoints for ferry to follow 
-% 8 rows, 2 columns; x_n and y_n respectively
+% variable rows, 2 columns; x_n and y_n respectively
 % New waypoints to follow the ferry path on the background map
-next_wp = [73 90; 64 93; 49 93; 43 82; 31 55; 22 34; 15 17; 3 14;
-            13 13; 23 36; 35 64; 44 87; 51 94; 74 89; 97 84];
-% Original waypoints before we used a background map
-% next_wp = [87 40; 80 45; 75 50; 65 55; 60 60; 50 70; 45 75; 30 90;
-%     25 75; 15 65; 25 55; 30 50; 40 40; 50 35; 60 30; 70 25; 80 20];
+next_wp = [0 0; 136.1 -28.7; 166.3 -28.0; 196.7 -18.7; 228.2, 12.12;
+            895.0 1290.0; 946.3 1327.3; 1010.5 1339.7; 
+            1226.3, 1332.4; 1927.3 1179.9; 1226.3, 1332.4;
+            1010.5 1339.7; 946.3 1327.3; 895.0 1290.0;
+            228.2, 12.12; 196.7 -18.7; 166.3 -28.0; 136.1 -28.7; 0 0];
+% Initial position and angle parameters
+theta(1) = 135;
+x(1) = next_wp(1,1); y(1) = next_wp(1,2); 
+x_des(1) = next_wp(2,1); y_des(1) = next_wp(2,2);
 
 % Counter for waypoints reached, starting at 1
 way_index = 1; % Increment each time each waypoint is reached
@@ -118,12 +123,16 @@ end
 
 %%%% This section constructs shapes, but no computation is done %%%%
 
-% New reference frame of 0 to 100 range for both axes
+% New reference figure with fixed axes
 figure(1); 
 hold on; 
-axis equal
-xlim([0 100])
-ylim([0 100])
+% axis equal
+% xlim([0 100])
+% ylim([0 100])
+%set(gcf, 'Position',  [100, 100, 704, 630])
+
+axis([-1322.1 3198.6 -1769.1 2320.8]) %this sets the figure's axes (in meters)
+set(gcf, 'Position',  [100, 50, 704, 630]) %rescales the figure so its bigger
 
 %this creates an image object we can manipulate and plot as a background
 im = imread('map.png');
@@ -136,12 +145,7 @@ shipbody_x = [1, 0, -1, -1, 0, 1]; % these form the coordinates of our shape
 shipbody_y = [0, 0.5, 0.5, -0.5, -0.5, 0];
 s = hgtransform;
 % This forms the shape, connects it to s
-patch('XData', shipbody_x, 'YData', shipbody_y, 'Parent', s) 
-
-% % Draw two lines; these represent landmasses % Not needed with background
-% LM_x1 = [0 40]; LM_x2 = [60 100];
-% LM_y1 = [70 100]; LM_y2 = [0 30]; 
-% line(LM_x1, LM_y1); line(LM_x2, LM_y2);
+patch('XData', shipbody_x*25, 'YData', shipbody_y*25, 'Parent', s) 
 
 % Setup trail and waypoint ahead of loop 
 ship_trail = plot([x(1) x(2)],[y(1) y(2)],'--'); 
@@ -151,6 +155,8 @@ current_waypoint = plot(x_des(1), y_des(1), 'x');
 for i = 1:N-1
 
     % Plot ship at current location/orientation
+    % the translate moves the figure to the next x,y,z coords
+    % the zrotate rotates the figure about the z axis in radians
     s.Matrix = makehgtform('translate', [x(i+1) y(i+1) 0], 'zrotate', theta(i)*pi/180);
     
     % Update trail of the ship
