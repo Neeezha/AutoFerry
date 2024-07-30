@@ -1,6 +1,7 @@
 % Nick Hauger 21MAY24
 % Tan Nguyen 06/18/24
-% Note: all math is done in degrees
+% Note: all math is done in degrees, MAKE SURE sind and cosd is used, not
+% sin and cos when using degrees!!!
 % remember commas seperate columns, semicolons rows
 % indexing matrices: A(#,:) gives entire row
                    % A(:, #) gives entire column
@@ -10,7 +11,7 @@ clear variables; clc; close all;
 % roc:      (x_dot, y_dot, theta_dot, V_dot)
 
 dt = 0.1; % our time interval
-tspan = 0:dt:1000; % a finite vector for our time to start out
+tspan = 0:dt:5000; % a finite vector for our time to start out
 N = length(tspan); 
 % initializing the position vectors
 x=zeros(N,1); y=zeros(N,1); theta_motor = zeros(N,1); theta_f = zeros(N,1);
@@ -32,8 +33,8 @@ b = 2.5;  % we'll keep the variable b as a constant at first
 Kp = 1; % Proportional control gain, can be adjusted after for-loop works
 
 % Additional velocity magintudes and direction
-V_c = 5; theta_c = 60; % water current mag and dir
-V_w = 5; theta_w = 90; % wind mag and dir
+V_c = 8; theta_c = 60; % water current mag and dir
+V_w = 0; theta_w = 90; % wind mag and dir
     % direction is constant rn but we could do a rand fn and make it change
 
 % Hard coded waypoints for ferry to follow 
@@ -45,7 +46,7 @@ next_wp = [0 0; 136.1 -28.7; 166.3 -28.0; 196.7 -18.7; 228.2, 12.12;
             1010.5 1339.7; 946.3 1327.3; 895.0 1290.0;
             228.2, 12.12; 196.7 -18.7; 166.3 -28.0; 136.1 -28.7; 0 0];
 % Initial position and angle parameters
-theta_motor(1) = 135;
+theta_motor(1) = 0;
 x(1) = next_wp(1,1); y(1) = next_wp(1,2); 
 x_des(1) = next_wp(2,1); y_des(1) = next_wp(2,2);
 
@@ -57,12 +58,12 @@ next_wp_size = length(next_wp); % Checks length of next_wp array
 for k = 2:(N)
     %%% calculating final Velocity value based on adding all velocities
     % converting motor velocity and theta into x and y components
-    V_motorx = V_motor*cos(theta_motor(k-1));
-    V_motory = V_motor*sin(theta_motor(k-1));
+    V_motorx = V_motor*cosd(theta_motor(k-1));
+    V_motory = V_motor*sind(theta_motor(k-1));
     % converting water current vel and dir into x and y components
-    V_cx = V_c*cos(theta_c); V_cy = V_c*sin(theta_c);
+    V_cx = V_c*cosd(theta_c); V_cy = V_c*sind(theta_c);
     % converting wind vel and dir into x and y components
-    V_wx = V_w*cos(theta_w); V_wy = V_w*sin(theta_w);
+    V_wx = V_w*cosd(theta_w); V_wy = V_w*sind(theta_w);
     
     % This is where we add the different vector components together
     V_fx = V_motorx + V_cx + V_wx; %add other x vectors as we make them
@@ -70,16 +71,16 @@ for k = 2:(N)
     
     % converting back to final V magnitude and theta
     V_f = sqrt(V_fx^2 + V_fy^2);
-    theta_f(1) = atan2d(V_fy, V_fx);
+    theta_f(k) = atan2d(V_fy, V_fx);
 
     %%% moving on from velocity, we can calc rate of change
     % our rate of change vectors for current loop
-    x_dot(k) = V_f.*cosd(theta_f(k-1)); % derivative of x
-    y_dot(k) = V_f.*sind(theta_f(k-1)); % derivative of y
+    x_dot(k) = V_f.*cosd(theta_f(k)); % derivative of x
+    y_dot(k) = V_f.*sind(theta_f(k)); % derivative of y
     theta_dot(k) = b*(u(k-1)); % derivative of theta
 
     % calculating the next point based upon the current + the derivative 
-    theta_f(k) = theta_f(k-1) + theta_dot(k)*dt;
+    theta_motor(k) = theta_motor(k-1) + theta_dot(k)*dt;
     x(k) = x(k-1) + x_dot(k)*dt;
     y(k) = y(k-1) + y_dot(k)*dt;
     
@@ -103,8 +104,9 @@ for k = 2:(N)
         way_index = 1;
         x_des(k) = x_des(k-1);
         y_des(k) = y_des(k-1);
-        theta_f(k-1) = theta_f(k-1) - 360;
-        
+        % if theta_motor(k-1) > 360
+        %     theta_motor(k-1) = theta_motor(k-1) - 360;
+        % end
     % Prepare next waypoint
     else 
         x_des(k) = x_des(k-1);
@@ -114,8 +116,10 @@ for k = 2:(N)
     % using error margins to find desired angle to rotate
     theta_des = atan2d(y_err(k), x_err(k));
 
-    if theta_f(k) > 180 % this keeps our current theta between -180 & 180
-        theta_f(k) = theta_f(k) - 360;
+    if theta_motor(k) > 180 % this keeps our current theta between -180 & 180
+        theta_motor(k) = theta_motor(k) - 360;
+    elseif theta_motor(k) < -180
+        theta_motor(k) = theta_motor(k) + 360;
     end
 
     % Adjust for desired turn direction
@@ -169,7 +173,7 @@ for i = 1:N-1
     % Plot ship at current location/orientation
     % the translate moves the figure to the next x,y,z coords
     % the zrotate rotates the figure about the z axis in radians
-    s.Matrix = makehgtform('translate', [x(i+1) y(i+1) 0], 'zrotate', theta_f(i)*pi/180);
+    s.Matrix = makehgtform('translate', [x(i+1) y(i+1) 0], 'zrotate', theta_motor(i)*pi/180);
     
     % Update trail of the ship
     set(ship_trail,'XData',x(1:i)); 
@@ -182,3 +186,8 @@ for i = 1:N-1
     drawnow % This is what draws the shape every update
 
 end
+% 
+% figure(2);
+% plot(theta_motor); 
+% hold on; 
+% plot(theta_f); 
