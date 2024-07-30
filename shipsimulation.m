@@ -6,14 +6,14 @@
                    % A(:, #) gives entire column
                    % A(2:3,#) gives 2nd-3rd rows, #th column
 clear variables; clc; close all;
-% state:    (x, y , theta, V)
+% state:    (x, y , theta_motor, V_motor)
 % roc:      (x_dot, y_dot, theta_dot, V_dot)
 
 dt = 0.1; % our time interval
 tspan = 0:dt:1000; % a finite vector for our time to start out
 N = length(tspan); 
 % initializing the position vectors
-x=zeros(N,1); y=zeros(N,1); theta = zeros(N,1);
+x=zeros(N,1); y=zeros(N,1); theta_motor = zeros(N,1); theta_f = zeros(N,1);
 % initializing error vectors
 x_err=zeros(N,1); y_err=zeros(N,1); theta_err = zeros(N,1);
 % initializing desired position vectors
@@ -24,23 +24,17 @@ x_dot = zeros(N,1); y_dot = zeros(N,1); theta_dot = zeros(N,1);
 u = zeros(N,1); 
 
 % Constant values
-V = 10; % We'll start with a constant velocity
+V_motor = 10; % We'll start with a constant velocity magnitude
         % this should be adjusted alongside b
 b = 2.5;  % we'll keep the variable b as a constant at first
-        % b affects rotation rate of change, should be changed alongside V
+        % b affects rotation rate of change, should be changed alongside
+        % V_motor
 Kp = 1; % Proportional control gain, can be adjusted after for-loop works
 
-% plot(136.1, -28.7, '*')
-% plot(166.3, -28.0, '*')
-% plot(196.7, -18.7, '*')
-% plot(228.2, 12.12, '*')
-% 
-% plot(895.0, 1290.0, '*')
-% plot(946.3, 1327.3, '*')
-% plot(1010.5, 1339.7, '*')
-% plot(1226.3, 1332.4, '*')
-% 
-% plot(1927.3, 1179.9, '*')
+% Additional velocity magintudes and direction
+V_c = 5; theta_c = 60; % water current mag and dir
+V_w = 5; theta_w = 90; % wind mag and dir
+    % direction is constant rn but we could do a rand fn and make it change
 
 % Hard coded waypoints for ferry to follow 
 % variable rows, 2 columns; x_n and y_n respectively
@@ -51,7 +45,7 @@ next_wp = [0 0; 136.1 -28.7; 166.3 -28.0; 196.7 -18.7; 228.2, 12.12;
             1010.5 1339.7; 946.3 1327.3; 895.0 1290.0;
             228.2, 12.12; 196.7 -18.7; 166.3 -28.0; 136.1 -28.7; 0 0];
 % Initial position and angle parameters
-theta(1) = 135;
+theta_motor(1) = 135;
 x(1) = next_wp(1,1); y(1) = next_wp(1,2); 
 x_des(1) = next_wp(2,1); y_des(1) = next_wp(2,2);
 
@@ -61,13 +55,31 @@ next_wp_size = length(next_wp); % Checks length of next_wp array
 
 % We'll do a loop where we update the equations as we go.
 for k = 2:(N)
+    %%% calculating final Velocity value based on adding all velocities
+    % converting motor velocity and theta into x and y components
+    V_motorx = V_motor*cos(theta_motor(k-1));
+    V_motory = V_motor*sin(theta_motor(k-1));
+    % converting water current vel and dir into x and y components
+    V_cx = V_c*cos(theta_c); V_cy = V_c*sin(theta_c);
+    % converting wind vel and dir into x and y components
+    V_wx = V_w*cos(theta_w); V_wy = V_w*sin(theta_w);
+    
+    % This is where we add the different vector components together
+    V_fx = V_motorx + V_cx + V_wx; %add other x vectors as we make them
+    V_fy = V_motory + V_cy + V_wy; %add other y vectors when we make them
+    
+    % converting back to final V magnitude and theta
+    V_f = sqrt(V_fx^2 + V_fy^2);
+    theta_f(1) = atan2d(V_fy, V_fx);
+
+    %%% moving on from velocity, we can calc rate of change
     % our rate of change vectors for current loop
-    x_dot(k) = V.*cosd(theta(k-1)); % derivative of x
-    y_dot(k) = V.*sind(theta(k-1)); % derivative of y
+    x_dot(k) = V_f.*cosd(theta_f(k-1)); % derivative of x
+    y_dot(k) = V_f.*sind(theta_f(k-1)); % derivative of y
     theta_dot(k) = b*(u(k-1)); % derivative of theta
 
     % calculating the next point based upon the current + the derivative 
-    theta(k) = theta(k-1) + theta_dot(k)*dt;
+    theta_f(k) = theta_f(k-1) + theta_dot(k)*dt;
     x(k) = x(k-1) + x_dot(k)*dt;
     y(k) = y(k-1) + y_dot(k)*dt;
     
@@ -91,7 +103,7 @@ for k = 2:(N)
         way_index = 1;
         x_des(k) = x_des(k-1);
         y_des(k) = y_des(k-1);
-        theta(k-1) = theta(k-1) - 360;
+        theta_f(k-1) = theta_f(k-1) - 360;
         
     % Prepare next waypoint
     else 
@@ -102,21 +114,21 @@ for k = 2:(N)
     % using error margins to find desired angle to rotate
     theta_des = atan2d(y_err(k), x_err(k));
 
-    if theta(k) > 180 % this keeps our current theta between -180 & 180
-        theta(k) = theta(k) - 360;
+    if theta_f(k) > 180 % this keeps our current theta between -180 & 180
+        theta_f(k) = theta_f(k) - 360;
     end
 
     % Adjust for desired turn direction
     % If turning in one direction is > 180 degress, go the other direction
-    if ((theta_des - theta(k)) > 180)
+    if ((theta_des - theta_f(k)) > 180)
         theta_des = theta_des - 360;
     
-    elseif (theta_des - theta(k) < -180)
+    elseif (theta_des - theta_f(k) < -180)
         theta_des = theta_des + 360; 
     end
     
     % calculating angle error for heading control
-    theta_err(k) = theta_des - theta(k);
+    theta_err(k) = theta_des - theta_f(k);
     % Calculate heading control input
     u(k) = Kp * theta_err(k);
 end 
@@ -157,7 +169,7 @@ for i = 1:N-1
     % Plot ship at current location/orientation
     % the translate moves the figure to the next x,y,z coords
     % the zrotate rotates the figure about the z axis in radians
-    s.Matrix = makehgtform('translate', [x(i+1) y(i+1) 0], 'zrotate', theta(i)*pi/180);
+    s.Matrix = makehgtform('translate', [x(i+1) y(i+1) 0], 'zrotate', theta_f(i)*pi/180);
     
     % Update trail of the ship
     set(ship_trail,'XData',x(1:i)); 
