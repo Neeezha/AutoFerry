@@ -25,7 +25,7 @@ x_dot = zeros(N,1); y_dot = zeros(N,1); theta_dot = zeros(N,1);
 u = zeros(N,1); 
 
 % Constant values
-V_motor = 10; % We'll start with a constant velocity magnitude
+V_motor = 15; % We'll start with a constant velocity magnitude
         % this should be adjusted alongside b
 b = 2.5;  % we'll keep the variable b as a constant at first
         % b affects rotation rate of change, should be changed alongside
@@ -33,8 +33,8 @@ b = 2.5;  % we'll keep the variable b as a constant at first
 Kp = 1; % Proportional control gain, can be adjusted after for-loop works
 
 % Additional velocity magintudes and direction
-V_c = 8; theta_c = 60; % water current mag and dir
-V_w = 0; theta_w = 90; % wind mag and dir
+V_c = 5; theta_c = 60; % water current mag and dir
+V_w = 5; theta_w = 90; % wind mag and dir
     % direction is constant rn but we could do a rand fn and make it change
 
 % Hard coded waypoints for ferry to follow 
@@ -56,7 +56,7 @@ next_wp_size = length(next_wp); % Checks length of next_wp array
 
 % We'll do a loop where we update the equations as we go.
 for k = 2:(N)
-    %%% calculating final Velocity value based on adding all velocities
+    %%% calculating final Velocity value based on adding all velocities %%%
     % converting motor velocity and theta into x and y components
     V_motorx = V_motor*cosd(theta_motor(k-1));
     V_motory = V_motor*sind(theta_motor(k-1));
@@ -73,7 +73,7 @@ for k = 2:(N)
     V_f = sqrt(V_fx^2 + V_fy^2);
     theta_f(k) = atan2d(V_fy, V_fx);
 
-    %%% moving on from velocity, we can calc rate of change
+    %%% moving on from velocity, we can calc rate of change %%%
     % our rate of change vectors for current loop
     x_dot(k) = V_f.*cosd(theta_f(k)); % derivative of x
     y_dot(k) = V_f.*sind(theta_f(k)); % derivative of y
@@ -116,20 +116,24 @@ for k = 2:(N)
     % using error margins to find desired angle to rotate
     theta_des = atan2d(y_err(k), x_err(k));
 
-    if theta_motor(k) > 180 % this keeps our current theta between -180 & 180
-        theta_motor(k) = theta_motor(k) - 360;
-    elseif theta_motor(k) < -180
-        theta_motor(k) = theta_motor(k) + 360;
-    end
+    % This keeps our current ship's theta between -180 & 180
+    theta_motor(k) = degree_bounder(theta_motor(k),theta_motor(k));
+    %%% this is replaced by the above fn ^
+    % if theta_motor(k) > 180 
+    %     theta_motor(k) = theta_motor(k) - 360;
+    % elseif theta_motor(k) < -180
+    %     theta_motor(k) = theta_motor(k) + 360;
+    % end
 
     % Adjust for desired turn direction
     % If turning in one direction is > 180 degress, go the other direction
-    if ((theta_des - theta_f(k)) > 180)
-        theta_des = theta_des - 360;
-    
-    elseif (theta_des - theta_f(k) < -180)
-        theta_des = theta_des + 360; 
-    end
+    theta_des = degree_bounder(theta_des,theta_des - theta_f(k));
+    %%% this is replaced by the above fn ^
+    % if ((theta_des - theta_f(k)) > 180)
+    %     theta_des = theta_des - 360;
+    % elseif (theta_des - theta_f(k) < -180)
+    %     theta_des = theta_des + 360; 
+    % end
     
     % calculating angle error for heading control
     theta_err(k) = theta_des - theta_f(k);
@@ -186,8 +190,3 @@ for i = 1:N-1
     drawnow % This is what draws the shape every update
 
 end
-% 
-% figure(2);
-% plot(theta_motor); 
-% hold on; 
-% plot(theta_f); 
