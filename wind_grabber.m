@@ -38,20 +38,21 @@ cls_info = forecast(cls_date_ind);
 cls_date = fcast_date(cls_date_ind);
 cls_date_heading = extractBetween(cls_info,'"direction":',',');
 cls_date_desc = extractBetween(cls_info,'"description":"','"');
+cls_date_mph = extractBetween(cls_info,'"y":',',');
 
 % In this section we take the wind power description and turn it into a magnitude
 % it's all feels based and we can always scale it inside the sim code too.
-if strcmp('light',cls_date_desc)
-    desc_to_mag = 5;
-elseif strcmp('gentle',cls_date_desc)
-    desc_to_mag = 8;
-else
-    desc_to_mag = 10;
-end
+% if strcmp('light',cls_date_desc)
+%     desc_to_mag = 5;
+% elseif strcmp('gentle',cls_date_desc)
+%     desc_to_mag = 8;
+% else
+%     desc_to_mag = 10;
+% end
 
 
 % Our final outputs to the main function. We could output the variables
 % we're setting them equal to, but this just feels cleaner to me?
 heading = double(string(cls_date_heading)); % output 1
-magnitude = desc_to_mag; % output 2
+magnitude = double(string(cls_date_mph)); % output 2
 end
