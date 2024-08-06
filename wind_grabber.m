@@ -16,7 +16,7 @@ utc_date = char(utc_date); % convert to a char array so I can remove the last 2 
 utc_date = utc_date(1:10); % remove the last 2 indices
 utc_date = string(utc_date); % convert back into string
 
-% grabbing forecast data. Trying to get as close to date as possible
+%%% grabbing forecast data. Trying to get as close to date as possible %%%
 forecast = extractBetween(pgdata,'data: {"f','}}}}}}','Boundaries','inclusive');
 forecast = split(forecast,'},{');
 % I grab the first 90 lines because: 
@@ -34,22 +34,24 @@ end % this could be implemented better.
 % now that we know the closest date, we can grab the information we want
 % from that time index. We can create more output arguments the more data we
 % want to send to the simulation.
-cls_info = forecast(cls_date_ind);
-cls_date = fcast_date(cls_date_ind);
-cls_date_heading = extractBetween(cls_info,'"direction":',',');
-cls_date_desc = extractBetween(cls_info,'"description":"','"');
-cls_date_mph = extractBetween(cls_info,'"y":',',');
+% cls_info = forecast(cls_date_ind);
+% cls_date = fcast_date(cls_date_ind);
+% cls_date_heading = extractBetween(cls_info,'"direction":',',');
+% cls_date_desc = extractBetween(cls_info,'"description":"','"');
+% cls_date_mph = extractBetween(cls_info,'"y":',',');
 
-% In this section we take the wind power description and turn it into a magnitude
-% it's all feels based and we can always scale it inside the sim code too.
-% if strcmp('light',cls_date_desc)
-%     desc_to_mag = 5;
-% elseif strcmp('gentle',cls_date_desc)
-%     desc_to_mag = 8;
-% else
-%     desc_to_mag = 10;
-% end
-
+%%% grabbbing the real-time observational data %%%
+real = extractBetween(pgdata,'"observationalGraphs":','}}}}}}','Boundaries','inclusive');
+real = split(real,'},{'); % splitting the data into its components
+real = real(length(real)); % grabbing the final index of data (the closest to utc)
+real = extractBefore(real, '}],"controlPoints":');
+% now that we know the closest date, we can grab the information we want
+% from that time index. We can create more output arguments the more data we
+% want to send to the simulation.
+cls_date = extractBetween(real,'"x":',',');
+cls_date_heading = extractBetween(real,'"direction":',',');
+cls_date_desc = extractBetween(real,'"description":"','"');
+cls_date_mph = extractBetween(real,'"y":',',');
 
 % Our final outputs to the main function. We could output the variables
 % we're setting them equal to, but this just feels cleaner to me?
