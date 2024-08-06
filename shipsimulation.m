@@ -34,7 +34,9 @@ Kp = 1; % Proportional control gain, can be adjusted after for-loop works
 
 % Additional velocity magintudes and direction
 V_c = 5; theta_c = 60; % water current mag and dir
-V_w = 5; theta_w = 90; % wind mag and dir
+[theta_w,V_w] = wind_grabber(); % wind mag and dir
+% fixing the heading given by the webpage, where N=0,E=90,S=180,W=270.
+theta_w = -degree_bounder(theta_w - 90, theta_w - 90);
     % direction is constant rn but we could do a rand fn and make it change
 
 % Hard coded waypoints for ferry to follow 
