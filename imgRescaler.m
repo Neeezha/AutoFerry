@@ -17,7 +17,7 @@ D = dir(pwd); %dir gives you the files in the directory you called
 i = length(D); % we'll check all the files in the directory to see if they're jpgs
 j = 1;
 while j <= i
-    if endsWith(D(j).name,".jpg") %if the file ends in .jpg
+    if (endsWith(D(j).name,".jpg")) || (endsWith(D(j).name, ".png")) %if the file ends in .jpg or .HEIC
         orig = imread(D(j).name); %create an array of data from the jpg
         
         [row,col,ignore] = size(orig); % we need to grab ignore or this fn breaks
@@ -53,9 +53,10 @@ while j <= i
         combo(1:desrow,1:descol,1) = red;
         combo(1:desrow,1:descol,2) = green;
         combo(1:desrow,1:descol,3) = blue;
-        imshow(combo)
+        %imshow(combo)
 
         s = erase(D(j).name, '.jpg'); %get rid of '.jpg' from the string (especially if theres multiple)
+        s = erase(D(j).name, '.png'); % get rid of '.png' from the string (especiialy if theres multiple)
         s = strcat(s,'_resized.jpg'); % append _'resized.jpg' onto the end
         imwrite(combo, s) % and we write it.
 
@@ -74,3 +75,4 @@ end
 % else 
 %     resized = imresize(edit, [NaN, descol]);
 % end
+
